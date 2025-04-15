@@ -1,25 +1,28 @@
 #include <iostream>
 
-// TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+/*
+    Preprocessing:
+        - For each object read all views.
+        - Extract keypoints and descriptors from each view using the preferred algorithm.
+        - Store the keypoints and descriptors in a std::vector or std::map for quick access.
+
+    Detection for Each Test Image:
+        - Convert the input test image to grayscale.
+        - Detect keypoints and compute descriptors using the preferred algorithm.
+        - Loop through all views for all objects:
+            - Match descriptors using BFMatcher (Brute-Force) with Euclidean distance (NORM_L2)
+                - Filter matches, if enough good matches are found:
+                    - Compute the Homography matrix with findHomography() using RANSAC
+                    - Use perspectiveTransform() to calculate the projected bounding box coordinates in the scene
+                    - Save the bounding box and draw it on the image.
+    Saving:
+        - Write bounding box info to a .txt file using the format:
+        <object_id>_<object_name> <xmin> <ymin> <xmax> <ymax> <is_present>
+
+    Output:
+        - Draw the bounding boxes on the image using rectangle() and label them with putText().
+*/
+
 int main() {
-    // TIP Press <shortcut actionId="RenameElement"/> when your caret is at the
-    // <b>lang</b> variable name to see how CLion can help you rename it.
-    auto lang = "C++";
-    std::cout << "Hello and welcome to " << lang << "!\n";
-
-    for (int i = 1; i <= 5; i++) {
-        // TIP Press <shortcut actionId="Debug"/> to start debugging your code.
-        // We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/>
-        // breakpoint for you, but you can always add more by pressing
-        // <shortcut actionId="ToggleLineBreakpoint"/>.
-        std::cout << "i = " << i << std::endl;
-    }
-
     return 0;
 }
-
-// TIP See CLion help at <a
-// href="https://www.jetbrains.com/help/clion/">jetbrains.com/help/clion/</a>.
-//  Also, you can try interactive lessons for CLion by selecting
-//  'Help | Learn IDE Features' from the main menu.
