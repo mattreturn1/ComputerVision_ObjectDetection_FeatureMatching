@@ -9,14 +9,14 @@ using namespace std;
 using namespace cv;
 
 int main() {
-    DetectorType detectorChoice = AKAZE_DETECTOR;
+    DetectorType detectorChoice = SIFT_DETECTOR;
     Ptr<Feature2D> detector = createFeatureDetector(detectorChoice);
 
     vector<ObjectModel> models;
     string dataPath = "./data/";
     loadSyntheticViews(dataPath, models, detector);
 
-    Mat scene = imread("./data/004_sugar_box/test_images/4_0001_000121-color.jpg", IMREAD_GRAYSCALE);
+    Mat scene = imread("./data/004_sugar_box/test_images/4_0054_000215-color.jpg", IMREAD_GRAYSCALE);
     if (scene.empty()) {
         cout << "Error: Could not load test image!" << endl;
         return -1;

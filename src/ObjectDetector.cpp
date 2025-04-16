@@ -64,17 +64,23 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
 
             vector<Point2f> objPoints, scenePoints;
             for (const auto& m : knnMatches) {
-                if (m.size() == 2 && m[0].distance < 0.75 * m[1].distance) {
+                if (m.size() == 2 && m[0].distance < 0.65 * m[1].distance) {  // più severo
                     objPoints.push_back(model.keypoints[i][m[0].queryIdx].pt);
                     scenePoints.push_back(sceneKP[m[0].trainIdx].pt);
                 }
             }
 
-            cout << model.name << " matches: " << objPoints.size() << endl;
+            cout << model.name << " matches after filtering: " << objPoints.size() << endl;
 
             if (objPoints.size() >= 4) {
                 Mat H = findHomography(objPoints, scenePoints, RANSAC);
                 if (!H.empty()) {
+                    double det = fabs(determinant(H));
+                    if (det < 0.1 || det > 10) {  // controllo geometrico
+                        cout << "Rejected detection (invalid homography) for: " << model.name << endl;
+                        continue;
+                    }
+
                     vector<Point2f> corners = { {0,0}, {static_cast<float>(model.images[i].cols),0},
                                                 {static_cast<float>(model.images[i].cols), static_cast<float>(model.images[i].rows)},
                                                 {0, static_cast<float>(model.images[i].rows)} };
@@ -92,7 +98,8 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
                     Rect box(Point2f(minX, minY), Point2f(maxX, maxY));
                     if (box.area() > 100) {
                         detections.emplace_back(box, model.name);
-                        cout << "Detected: " << model.name << " | Box: [" << box.x << "," << box.y << "," << box.x + box.width << "," << box.y + box.height << "]" << endl;
+                        cout << "Detected: " << model.name << " | Box: ["
+                             << box.x << "," << box.y << "," << box.x + box.width << "," << box.y + box.height << "]" << endl;
                     }
                 } else {
                     cout << "Homography failed for: " << model.name << endl;
@@ -103,8 +110,24 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
         }
     }
 
-    return detections;
+    // Filtro duplicati per overlap
+    vector<pair<Rect, string>> filtered;
+    for (const auto& det : detections) {
+        bool overlap = false;
+        for (const auto& f : filtered) {
+            float intersectionArea = (det.first & f.first).area();
+            float minArea = min((float)det.first.area(), (float)f.first.area());
+            if (intersectionArea > 0.5f * minArea) {  // se più del 50% sovrapposto
+                overlap = true;
+                break;
+            }
+        }
+        if (!overlap) filtered.push_back(det);
+    }
+
+    return filtered;
 }
+
 
 void saveDetections(const string& filepath, const vector<pair<Rect, string>>& detections) {
     ofstream file(filepath);
