@@ -8,6 +8,8 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 
+enum DetectorType { SIFT_DETECTOR, ORB_DETECTOR, FAST_BRIEF_DETECTOR };
+
 struct ObjectModel {
     string name;
     vector<Mat> images;
@@ -15,7 +17,20 @@ struct ObjectModel {
     vector<Mat> descriptors;
 };
 
-void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr<SIFT>& sift) {
+Ptr<Feature2D> createFeatureDetector(DetectorType type) {
+    switch (type) {
+        case SIFT_DETECTOR:
+            return SIFT::create();
+        case ORB_DETECTOR:
+            return ORB::create();
+        case FAST_BRIEF_DETECTOR:
+            return ORB::create(); // ORB internally uses FAST + BRIEF
+        default:
+            return SIFT::create();
+    }
+}
+
+void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr<Feature2D>& detector) {
     if (!fs::exists(basePath)) {
         cout << "Error: basePath does not exist: " << basePath << endl;
         return;
@@ -29,6 +44,11 @@ void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr
         string modelsFolder = folder.path().string() + "/models/";
 
         for (const auto& file : fs::directory_iterator(modelsFolder)) {
+            string filename = file.path().filename().string();
+
+            // Salta i file di maschera
+            if (filename.find("_mask") != string::npos) continue;
+
             Mat img = imread(file.path().string(), IMREAD_GRAYSCALE);
             if (img.empty()) {
                 cout << "Error loading: " << file.path() << endl;
@@ -37,7 +57,7 @@ void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr
 
             vector<KeyPoint> kp;
             Mat des;
-            sift->detectAndCompute(img, noArray(), kp, des);
+            detector->detectAndCompute(img, noArray(), kp, des);
 
             model.images.push_back(img);
             model.keypoints.push_back(kp);
@@ -47,19 +67,20 @@ void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr
                  << " | Keypoints: " << kp.size() << endl;
         }
 
+
         models.push_back(model);
     }
 }
 
-vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectModel>& models, Ptr<SIFT>& sift) {
+vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectModel>& models, Ptr<Feature2D>& detector, DetectorType type) {
     vector<pair<Rect, string>> detections;
     vector<KeyPoint> sceneKP;
     Mat sceneDesc;
 
-    sift->detectAndCompute(scene, noArray(), sceneKP, sceneDesc);
+    detector->detectAndCompute(scene, noArray(), sceneKP, sceneDesc);
     cout << "Scene keypoints: " << sceneKP.size() << endl;
 
-    BFMatcher matcher(NORM_L2);
+    BFMatcher matcher(type == ORB_DETECTOR || type == FAST_BRIEF_DETECTOR ? NORM_HAMMING : NORM_L2);
 
     for (const auto& model : models) {
         for (size_t i = 0; i < model.descriptors.size(); ++i) {
@@ -98,8 +119,7 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
                         detections.emplace_back(box, model.name);
                         cout << "Detected: " << model.name << " | Box: ["
                              << box.x << "," << box.y << ","
-                             << box.x + box.width << ","
-                             << box.y + box.height << "]" << endl;
+                             << box.x + box.width << "," << box.y + box.height << "]" << endl;
                     }
                 } else {
                     cout << "Homography failed for: " << model.name << endl;
@@ -131,13 +151,14 @@ void drawBoundingBoxes(Mat& image, const vector<pair<Rect, string>>& detections)
 }
 
 int main() {
-    Ptr<SIFT> sift = SIFT::create();
+    DetectorType detectorChoice = ORB_DETECTOR;  // Cambia qui: SIFT_DETECTOR, ORB_DETECTOR, FAST_BRIEF_DETECTOR
+    Ptr<Feature2D> detector = createFeatureDetector(detectorChoice);
 
     vector<ObjectModel> models;
     string dataPath = "./data/";
-    loadSyntheticViews(dataPath, models, sift);
+    loadSyntheticViews(dataPath, models, detector);
 
-    Mat scene = imread("./data/004_sugar_box/test_images/4_0001_000121-color.jpg");
+    Mat scene = imread("./data/004_sugar_box/test_images/4_0001_000121-color.jpg", IMREAD_GRAYSCALE);
     if (scene.empty()) {
         cout << "Error: Could not load test image!" << endl;
         return -1;
@@ -145,10 +166,13 @@ int main() {
 
     if (!fs::exists("./output/")) fs::create_directory("./output/");
 
-    auto detections = detectObjects(scene, models, sift);
+    auto detections = detectObjects(scene, models, detector, detectorChoice);
     saveDetections("./output/results.txt", detections);
-    drawBoundingBoxes(scene, detections);
-    imwrite("./output/output_image.png", scene);
+
+    Mat colorScene;
+    cvtColor(scene, colorScene, COLOR_GRAY2BGR);
+    drawBoundingBoxes(colorScene, detections);
+    imwrite("./output/output_image.png", colorScene);
 
     cout << "Detection complete. Results saved." << endl;
     return 0;
