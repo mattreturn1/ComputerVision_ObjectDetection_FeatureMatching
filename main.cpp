@@ -16,6 +16,11 @@ struct ObjectModel {
 };
 
 void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr<SIFT>& sift) {
+    if (!fs::exists(basePath)) {
+        cout << "Error: basePath does not exist: " << basePath << endl;
+        return;
+    }
+
     for (const auto& folder : fs::directory_iterator(basePath)) {
         if (!fs::is_directory(folder)) continue;
 
