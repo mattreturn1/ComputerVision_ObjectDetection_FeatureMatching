@@ -2,17 +2,25 @@ cmake_minimum_required(VERSION 3.10)
 project(IntermediateProjectCV)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Percorso per OpenCV — personalizza se necessario
 set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib")
 find_package(OpenCV REQUIRED)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-
+# Includi la cartella headers
 include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_executable(IntermediateProjectCV
-        features_detection_TEST.cpp)
+# Aggiungi tutti i file sorgente
+set(SOURCES
+        src/ObjectDetector.cpp
+        src/FeatureFactory.cpp
+        src/main.cpp
+)
 
+# Crea l'eseguibile
+add_executable(IntermediateProjectCV ${SOURCES})
+
+# Linka OpenCV
 target_link_libraries(IntermediateProjectCV ${OpenCV_LIBS})
-
-

@@ -1,5 +1,4 @@
-#include <opencv2/opencv.hpp>
-#include <opencv2/features2d.hpp>
+#include "ObjectDetector.hpp"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -7,28 +6,6 @@
 namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
-
-enum DetectorType { SIFT_DETECTOR, ORB_DETECTOR, FAST_BRIEF_DETECTOR };
-
-struct ObjectModel {
-    string name;
-    vector<Mat> images;
-    vector<vector<KeyPoint>> keypoints;
-    vector<Mat> descriptors;
-};
-
-Ptr<Feature2D> createFeatureDetector(DetectorType type) {
-    switch (type) {
-        case SIFT_DETECTOR:
-            return SIFT::create();
-        case ORB_DETECTOR:
-            return ORB::create();
-        case FAST_BRIEF_DETECTOR:
-            return ORB::create(); // ORB internally uses FAST + BRIEF
-        default:
-            return SIFT::create();
-    }
-}
 
 void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr<Feature2D>& detector) {
     if (!fs::exists(basePath)) {
@@ -46,7 +23,6 @@ void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr
         for (const auto& file : fs::directory_iterator(modelsFolder)) {
             string filename = file.path().filename().string();
 
-            // Salta i file di maschera
             if (filename.find("_mask") != string::npos) continue;
 
             Mat img = imread(file.path().string(), IMREAD_GRAYSCALE);
@@ -66,7 +42,6 @@ void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr
             cout << "Loaded: " << model.name << " | " << file.path().filename()
                  << " | Keypoints: " << kp.size() << endl;
         }
-
 
         models.push_back(model);
     }
@@ -117,9 +92,7 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
                     Rect box(Point2f(minX, minY), Point2f(maxX, maxY));
                     if (box.area() > 100) {
                         detections.emplace_back(box, model.name);
-                        cout << "Detected: " << model.name << " | Box: ["
-                             << box.x << "," << box.y << ","
-                             << box.x + box.width << "," << box.y + box.height << "]" << endl;
+                        cout << "Detected: " << model.name << " | Box: [" << box.x << "," << box.y << "," << box.x + box.width << "," << box.y + box.height << "]" << endl;
                     }
                 } else {
                     cout << "Homography failed for: " << model.name << endl;
@@ -137,9 +110,7 @@ void saveDetections(const string& filepath, const vector<pair<Rect, string>>& de
     ofstream file(filepath);
     int id = 0;
     for (const auto& [box, name] : detections) {
-        file << id++ << "_" << name << " "
-             << box.x << " " << box.y << " "
-             << box.x + box.width << " " << box.y + box.height << " 1\n";
+        file << id++ << "_" << name << " " << box.x << " " << box.y << " " << box.x + box.width << " " << box.y + box.height << " 1\n";
     }
 }
 
@@ -150,30 +121,3 @@ void drawBoundingBoxes(Mat& image, const vector<pair<Rect, string>>& detections)
     }
 }
 
-int main() {
-    DetectorType detectorChoice = ORB_DETECTOR;  // Cambia qui: SIFT_DETECTOR, ORB_DETECTOR, FAST_BRIEF_DETECTOR
-    Ptr<Feature2D> detector = createFeatureDetector(detectorChoice);
-
-    vector<ObjectModel> models;
-    string dataPath = "./data/";
-    loadSyntheticViews(dataPath, models, detector);
-
-    Mat scene = imread("./data/004_sugar_box/test_images/4_0001_000121-color.jpg", IMREAD_GRAYSCALE);
-    if (scene.empty()) {
-        cout << "Error: Could not load test image!" << endl;
-        return -1;
-    }
-
-    if (!fs::exists("./output/")) fs::create_directory("./output/");
-
-    auto detections = detectObjects(scene, models, detector, detectorChoice);
-    saveDetections("./output/results.txt", detections);
-
-    Mat colorScene;
-    cvtColor(scene, colorScene, COLOR_GRAY2BGR);
-    drawBoundingBoxes(colorScene, detections);
-    imwrite("./output/output_image.png", colorScene);
-
-    cout << "Detection complete. Results saved." << endl;
-    return 0;
-}
