@@ -10,7 +10,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
+
 add_executable(IntermediateProjectCV
         main.cpp)
 
 target_link_libraries(IntermediateProjectCV ${OpenCV_LIBS})
+
+
