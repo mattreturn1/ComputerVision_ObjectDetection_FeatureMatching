@@ -1,46 +1,67 @@
-SUBSTITUTE auto
+# Object Detection Pipeline Overview
 
-MODULO 1 (MATTIA)
+## MODULE 1 — Preprocessing (MATTIA)
 
-INCLUDE PARSER FOR TRAIN/MASK IMAGES
-Preprocessing:
-        - For each object read all images.
-        - Extract keypoints and descriptors from each view using the preferred algorithm.
-        - Store the keypoints and descriptors in a std::vector or std::map for quick access.
-        - (USING MASKS FOR MODELS?)
-        - (OPTIONAL)(SAVE THE KEYPOINTS AND DESCRIPTORS ON .TXT AS MAP)
+**Include Parser for Train/Mask Images**
 
-MODULO 2 (FRANCESCO)
+Steps:
+- For each object, read all available images.
+- Extract keypoints and descriptors from each view using the preferred feature extraction algorithm.
+- Store the keypoints and descriptors in a `std::vector` or `std::map` for quick access.
+- *(Optional)*: If masks are used for models, integrate mask-based filtering.
+- *(Optional)*: Save the extracted keypoints and descriptors into `.txt` files as a map for future reuse.
 
-INCLUDE PARSER FOR TEST IMAGES
-Detection for Each Test Image:
-        - Convert the input test image to grayscale.
-        - Detect keypoints and compute descriptors using the preferred algorithm.
-        - Loop through all views for all objects:
-            - Match descriptors using BFMatcher (Brute-Force) with Euclidean distance (NORM_L2), (AND OTHERS?)
-                - Filter matches, if enough good matches are found:
-                    - Compute the Homography matrix with findHomography() using RANSAC
-                    - Use perspectiveTransform() to calculate the projected bounding box coordinates in the scene
+---
 
-(MICHELE)
+## MODULE 2 — Detection (FRANCESCO)
 
-MODULO 3 
+**Include Parser for Test Images**
 
-Output:
-        - Write bounding box info to a .txt file using the format:
-        <object_id>_<object_name> <xmin> <ymin> <xmax> <ymax> <is_present>
+Steps for Each Test Image:
+- Convert the input image to grayscale.
+- Detect keypoints and compute descriptors using the preferred algorithm.
+- Loop through all object views:
+    - Match descriptors using `BFMatcher` (Brute-Force) with **Euclidean distance (NORM_L2)**.  
+      *(Other matching strategies can be considered.)*
+    - Filter matches. If enough good matches are found:
+        - Compute the **Homography matrix** using `findHomography()` with **RANSAC**.
+        - Use `perspectiveTransform()` to calculate the projected bounding box coordinates in the scene.
 
-MODULO 4
+---
+## (MICHELE)
+## MODULE 3 — Output
 
-Drawing:
-        - Draw the bounding boxes on the image using rectangle() and label them with putText().
+**Result Export**
 
-MODULO 5
+- Write bounding box information to a `.txt` file using the following format:
+```
+<object_id>_<object_name> <xmin> <ymin> <xmax> <ymax> <is_present>
+```
 
-Metrics:
-        - The mean Intersection over Union (mIoU) is the average of the IoU computed for each object category;
-        - For detection accuracy, the number of object instances correctly recognized for each object category, 
-        considering a true positive (object is correctly detected) if the predicted and ground truth bounding boxes have IoU>0.5).
+---
 
+## MODULE 4 — Drawing
+
+**Visualization**
+
+- Draw the predicted bounding boxes on the image using `rectangle()`.
+- Label each bounding box using `putText()` with the object name or ID.
+
+---
+
+## MODULE 5 — Metrics
+
+**Evaluation**
+
+- **Mean Intersection over Union (mIoU)**:  
+  Calculate the average IoU across all object categories.
+- **Detection Accuracy**:  
+  Count the number of object instances correctly recognized per category.  
+  An object is considered **correctly detected (true positive)** if the predicted and ground truth bounding boxes have:
+```
+IoU > 0.5
+```
+
+---
 
 
