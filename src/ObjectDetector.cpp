@@ -69,6 +69,8 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
             matcher.knnMatch(model.descriptors[i], sceneDesc, knnMatches, 2);  // Find the 2 nearest matches for each descriptor
 
             vector<Point2f> objPoints, scenePoints;
+            //TODO FIT THRESHOLD
+
             // Apply Lowe's ratio test to filter matches
             for (const auto& m : knnMatches) {
                 if (m.size() == 2 && m[0].distance < 0.65 * m[1].distance) {
@@ -83,11 +85,15 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
                 Mat H = findHomography(objPoints, scenePoints, RANSAC);  // Estimate the transformation
                 if (!H.empty()) {
                     double det = fabs(determinant(H));
+                    //TODO CHECK DET
+                    //TODO COUNTNOTZERO
+
                     // Reject extreme distortions based on determinant
                     if (det < 0.1 || det > 10) {
                         cout << "Rejected detection (invalid homography) for: " << model.name << endl;
                         continue;
                     }
+
 
                     // Define object corners in the model image
                     vector<Point2f> corners = { {0,0}, {static_cast<float>(model.images[i].cols),0},
@@ -95,6 +101,8 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
                                                 {0, static_cast<float>(model.images[i].rows)} };
                     vector<Point2f> projected;
                     perspectiveTransform(corners, projected, H);  // Map corners to the scene
+
+                    //TODO RECHECK BOUNDING BOX AND CONTROL IF IS IN SCENE
 
                     // Compute bounding box around the projected corners
                     float minX = scene.cols, minY = scene.rows, maxX = 0, maxY = 0;
@@ -119,6 +127,8 @@ vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectMo
             }
         }
     }
+
+    //TODO CONTROL OVERLAP
 
     // Remove overlapping detections (keep only the most confident one)
     vector<pair<Rect, string>> filtered;
