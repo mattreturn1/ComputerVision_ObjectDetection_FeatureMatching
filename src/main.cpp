@@ -19,22 +19,8 @@ int main() {
     string dataPath = "./data/";
     computingModels(dataPath, models, detector);
 
-    Mat scene = imread("./data/004_sugar_box/test_images/4_0077_000659-color.jpg", IMREAD_GRAYSCALE);
-    if (scene.empty()) {
-        cout << "Error: Could not load test image!" << endl;
-        return -1;
-    }
+    processAllTestImages(dataPath, models, detector, detectorChoice);
 
-    if (!fs::exists("./output/")) fs::create_directory("./output/");
-
-    auto detections = detectObjects(scene, models, detector, detectorChoice);
-    saveDetections("./output/results.txt", detections);
-
-    Mat colorScene;
-    cvtColor(scene, colorScene, COLOR_GRAY2BGR);
-    drawBoundingBoxes(colorScene, detections);
-    imwrite("./output/output_image.png", colorScene);
-
-    cout << "Detection complete. Results saved." << endl;
+    cout << "Detection complete. Results saved in ./output/ directory." << endl;
     return 0;
 }

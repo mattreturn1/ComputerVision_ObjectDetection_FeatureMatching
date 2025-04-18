@@ -121,3 +121,52 @@ void drawBoundingBoxes(Mat& image, const vector<pair<Rect, string>>& detections)
         putText(image, name, box.tl() + Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 0, 0), 2);  // Draw label
     }
 }
+
+void processAllTestImages(const string& basePath, const vector<ObjectModel>& models, Ptr<Feature2D>& detector, DetectorType type) {
+    vector<string> objectFolders = {
+        "004_sugar_box",
+        "006_mustard_bottle",
+        "035_power_drill"
+    };
+
+    if (!fs::exists("./output/")) {
+        fs::create_directory("./output/");
+    }
+
+    for (const auto& folder : objectFolders) {
+        string testImagesPath = basePath + folder + "/test_images/";
+        if (!fs::exists(testImagesPath)) {
+            cout << "Test images folder not found: " << testImagesPath << endl;
+            continue;
+        }
+
+        for (const auto& entry : fs::directory_iterator(testImagesPath)) {
+            if (entry.path().extension() != ".jpg" && entry.path().extension() != ".png") {
+                continue;
+            }
+
+            Mat scene = imread(entry.path().string(), IMREAD_GRAYSCALE);
+            if (scene.empty()) {
+                cout << "Error loading test image: " << entry.path() << endl;
+                continue;
+            }
+
+            cout << "\nProcessing image: " << entry.path().filename() << endl;
+            auto detections = detectObjects(scene, models, detector, type);
+
+            string baseFilename = entry.path().stem().string();
+            string resultFilename = "./output/" + baseFilename + "_results.txt";
+            string outputImageFilename = "./output/" + baseFilename + "_output.png";
+
+            saveDetections(resultFilename, detections);
+
+            Mat colorScene;
+            cvtColor(scene, colorScene, COLOR_GRAY2BGR);
+            drawBoundingBoxes(colorScene, detections);
+            imwrite(outputImageFilename, colorScene);
+
+            cout << "Detection results saved to: " << resultFilename 
+                 << " and " << outputImageFilename << endl;
+        }
+    }
+}

@@ -22,12 +22,13 @@ struct ObjectModel {
     std::vector<cv::Mat> descriptors;
 };
 
-void loadSyntheticViews(const std::string& basePath, std::vector<ObjectModel>& models, cv::Ptr<cv::Feature2D>& detector);
-
 std::vector<std::pair<cv::Rect, std::string>> detectObjects(const cv::Mat& scene, const std::vector<ObjectModel>& models, cv::Ptr<cv::Feature2D>& detector, DetectorType type);
 
 void saveDetections(const std::string& filepath, const std::vector<std::pair<cv::Rect, std::string>>& detections);
 
 void drawBoundingBoxes(cv::Mat& image, const std::vector<std::pair<cv::Rect, std::string>>& detections);
+
+// NEW FUNCTION
+void processAllTestImages(const std::string& basePath, const std::vector<ObjectModel>& models, cv::Ptr<cv::Feature2D>& detector, DetectorType type);
 
 #endif
