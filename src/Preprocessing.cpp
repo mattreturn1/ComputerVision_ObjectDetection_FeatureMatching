@@ -7,7 +7,7 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 
-// Function to load synthetic object views from folders and extract keypoints & descriptors
+// Function to load objects images from folders and extract keypoints & descriptors
 void computingModels(const string& basePath, vector<ObjectModel>& models, Ptr<Feature2D>& detector) {
     if (!fs::exists(basePath)) {
         cout << "Error: basePath does not exist: " << basePath << endl;
