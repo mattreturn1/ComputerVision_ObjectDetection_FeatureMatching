@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include "FeatureFactory.hpp"
 #include "ObjectDetector.hpp"
+#include "Preprocessing.hpp"
 #include <filesystem>
 #include <iostream>
 
@@ -16,9 +17,9 @@ int main() {
 
     vector<ObjectModel> models;
     string dataPath = "./data/";
-    loadSyntheticViews(dataPath, models, detector);
+    computingModels(dataPath, models, detector);
 
-    Mat scene = imread("./data/004_sugar_box/test_images/4_0001_000121-color.jpg", IMREAD_GRAYSCALE);
+    Mat scene = imread("./data/004_sugar_box/test_images/4_0077_000659-color.jpg", IMREAD_GRAYSCALE);
     if (scene.empty()) {
         cout << "Error: Could not load test image!" << endl;
         return -1;

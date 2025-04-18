@@ -17,6 +17,7 @@ set(SOURCES
         src/ObjectDetector.cpp
         src/FeatureFactory.cpp
         src/main.cpp
+        src/Preprocessing.cpp
 )
 
 # Crea l'eseguibile

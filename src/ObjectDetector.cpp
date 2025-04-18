@@ -7,49 +7,6 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 
-// Function to load synthetic object views from folders and extract keypoints & descriptors
-void loadSyntheticViews(const string& basePath, vector<ObjectModel>& models, Ptr<Feature2D>& detector) {
-    if (!fs::exists(basePath)) {  // Check if the provided base path exists
-        cout << "Error: basePath does not exist: " << basePath << endl;
-        return;
-    }
-
-    // Iterate through each subdirectory (representing a model)
-    for (const auto& folder : fs::directory_iterator(basePath)) {
-        if (!fs::is_directory(folder)) continue;
-
-        ObjectModel model;
-        model.name = folder.path().filename().string();  // Extract model name from folder name
-        string modelsFolder = folder.path().string() + "/models/";
-
-        // Iterate through all image files in the model folder
-        for (const auto& file : fs::directory_iterator(modelsFolder)) {
-            string filename = file.path().filename().string();
-
-            if (filename.find("_mask") != string::npos) continue;  // Skip mask files
-
-            Mat img = imread(file.path().string(), IMREAD_GRAYSCALE);  // Load image in grayscale
-            if (img.empty()) {  // Check for loading errors
-                cout << "Error loading: " << file.path() << endl;
-                continue;
-            }
-
-            vector<KeyPoint> kp;
-            Mat des;
-            detector->detectAndCompute(img, noArray(), kp, des);  // Detect keypoints and compute descriptors
-
-            model.images.push_back(img);         // Store image
-            model.keypoints.push_back(kp);       // Store keypoints
-            model.descriptors.push_back(des);    // Store descriptors
-
-            cout << "Loaded: " << model.name << " | " << file.path().filename()
-                 << " | Keypoints: " << kp.size() << endl;
-        }
-
-        models.push_back(model);  // Add the fully-loaded model to the list
-    }
-}
-
 // Function to detect objects in a given scene image using feature matching and homography
 vector<pair<Rect, string>> detectObjects(const Mat& scene, const vector<ObjectModel>& models, Ptr<Feature2D>& detector, DetectorType type) {
     vector<pair<Rect, string>> detections;
