@@ -20,7 +20,6 @@ set(SOURCES
         src/Preprocessing.cpp
         src/Filter.cpp
         src/Output.cpp
-        include/Output.hpp
 )
 
 # Crea l'eseguibile
