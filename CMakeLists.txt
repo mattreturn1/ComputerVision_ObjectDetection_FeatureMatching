@@ -18,6 +18,9 @@ set(SOURCES
         src/FeatureFactory.cpp
         src/main.cpp
         src/Preprocessing.cpp
+        src/Filter.cpp
+        src/Output.cpp
+        include/Output.hpp
 )
 
 # Crea l'eseguibile
