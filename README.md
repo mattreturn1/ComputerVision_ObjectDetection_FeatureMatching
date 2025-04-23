@@ -63,5 +63,15 @@ IoU > 0.5
 ```
 
 ---
+### Notes
+
+- Retrieve all **good matches** for each model of the same object and place them in **our view**.
+- A test contains **all features** for **all views** for **all objects**.
+- Set a **low max distance** so that the most recurring points are detected as valid boxes, while distant/noisy points are filtered out.
+- **Unexpected boxes** may occur due to merges between nearby boxes of different objects (controlled by a **box border distance parameter**).
+- Collect all the boxes and **remove those that are too small** (controlled by a **box area parameter**).
+
+
+
 
 
