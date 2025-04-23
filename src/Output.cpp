@@ -7,6 +7,7 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 // Save detections to file
+//TODO CONTROL id
 void saveDetections(const string& filepath, const vector<pair<Rect, string>>& detections) {
     ofstream file(filepath);
     int id = 0;
