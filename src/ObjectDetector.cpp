@@ -260,30 +260,26 @@ vector<pair<Rect, string>> detectObjects(
     DetectorType type
 ) {
     const float MATCH_RATIO_THRESHOLD = 0.75f;
-    const int MIN_INLIERS = 4;
+    const int MIN_INLIERS = 6;
     const double RANSAC_THRESHOLD = 5.0;
     const float HOMOGRAPHY_DET_THRESHOLD = 0.1;
     const float HOMOGRAPHY_DET_UPPER_THRESHOLD = 10.0;
-    const float MAX_POINT_DISTANCE = 30.0f; // Max distance from mean for spatial filtering
+    const float MAX_POINT_DISTANCE = 50.0f;
 
-    Mat preprocessedScene = preprocessImage(scene); // Grayscale conversion or preprocessing
-
+    Mat preprocessedScene = preprocessImage(scene);
     vector<pair<Rect, string>> detections;
     vector<KeyPoint> sceneKP;
     Mat sceneDesc;
     detector->detectAndCompute(preprocessedScene, noArray(), sceneKP, sceneDesc);
 
-    BFMatcher matcher(
-        (type == ORB_DETECTOR || type == FAST_BRIEF_DETECTOR) ? NORM_HAMMING : NORM_L2);
+    BFMatcher matcher((type == ORB_DETECTOR || type == FAST_BRIEF_DETECTOR) ? NORM_HAMMING : NORM_L2);
 
     string matchDir = "./output/matches/";
     if (!fs::exists(matchDir)) fs::create_directories(matchDir);
 
     for (const auto &model : models) {
-        vector<Rect> candidateBoxes;
-        vector<vector<DMatch>> allGoodMatches;  // To store good matches across all views of the model
-        vector<Point2f> allObjPts;  // To store object points from all views
-        vector<Point2f> allScenePts;  // To store scene points from all views
+        vector<Point2f> allUnfilteredScenePts;
+        vector<Point2f> discardedPtsGlobal;
 
         for (size_t i = 0; i < model.descriptors.size(); ++i) {
             vector<vector<DMatch>> knnMatches;
@@ -301,11 +297,6 @@ vector<pair<Rect, string>> detectObjects(
 
             if (goodMatches.size() < MIN_INLIERS) continue;
 
-            // Add the good matches of the current view to the list of all good matches
-            allGoodMatches.push_back(goodMatches);
-            allObjPts.insert(allObjPts.end(), objPts.begin(), objPts.end());
-            allScenePts.insert(allScenePts.end(), scenePts.begin(), scenePts.end());
-
             Mat inlierMask;
             Mat H = findHomography(objPts, scenePts, RANSAC, RANSAC_THRESHOLD, inlierMask);
             if (H.empty()) continue;
@@ -316,71 +307,66 @@ vector<pair<Rect, string>> detectObjects(
             double detH = fabs(determinant(H));
             if (detH < HOMOGRAPHY_DET_THRESHOLD || detH > HOMOGRAPHY_DET_UPPER_THRESHOLD) continue;
 
-            vector<Point2f> inlierScenePts;
+            // Accumula gli inlier di questa view (senza filtraggio)
             for (size_t j = 0; j < scenePts.size(); ++j) {
                 if (inlierMask.at<uchar>(j)) {
-                    inlierScenePts.push_back(scenePts[j]);
+                    allUnfilteredScenePts.push_back(scenePts[j]);
                 }
             }
 
-            if (!inlierScenePts.empty()) {
-                // Calculate the center of the inlier cluster
-                Point2f mean(0, 0);
-                for (const auto &pt : inlierScenePts) mean += pt;
-                mean *= (1.0f / inlierScenePts.size());
+            // Disegna match base
+            Mat matchImg;
+            drawMatches(
+                model.images[i], model.keypoints[i],
+                scene, sceneKP,
+                goodMatches,
+                matchImg,
+                Scalar::all(-1), Scalar::all(-1),
+                vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+            );
 
-                // Filter out isolated points too far from the center
-                vector<Point2f> filteredPts;
-                for (const auto &pt : inlierScenePts) {
-                    if (norm(pt - mean) <= MAX_POINT_DISTANCE) {
-                        filteredPts.push_back(pt);
-                    }
-                }
+            string outPath = matchDir + sceneName + "_" + model.name + "_view" + to_string(i) + ".png";
+            imwrite(outPath, matchImg);
+            cout << "Saved match image: " << outPath << endl;
+        }
 
-                if (!filteredPts.empty()) {
-                    Rect candidateBox = boundingRect(filteredPts);
-                    candidateBoxes.push_back(candidateBox);
+        // Calcolo centroide globale e filtraggio
+        vector<Point2f> finalFilteredPts;
+        if (!allUnfilteredScenePts.empty()) {
+            Point2f globalMean(0, 0);
+            for (const auto &pt : allUnfilteredScenePts) globalMean += pt;
+            globalMean *= (1.0f / allUnfilteredScenePts.size());
 
-                    Mat matchImg;
-                    drawMatches(
-                        model.images[i], model.keypoints[i],
-                        scene, sceneKP,
-                        goodMatches,
-                        matchImg,
-                        Scalar::all(-1), Scalar::all(-1),
-                        vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-                    );
-                    string outPath = matchDir + sceneName + "_" + model.name + "_view" + to_string(i) + ".png";
-                    imwrite(outPath, matchImg);
-                    cout << "Saved match image: " << outPath << endl;
+            for (const auto &pt : allUnfilteredScenePts) {
+                if (norm(pt - globalMean) <= MAX_POINT_DISTANCE) {
+                    finalFilteredPts.push_back(pt);
+                } else {
+                    discardedPtsGlobal.push_back(pt);
                 }
             }
         }
 
-        if (!allGoodMatches.empty()) {
-            // Combine all good matches into one list
-            vector<Point2f> allFilteredPts;
-            for (size_t i = 0; i < allScenePts.size(); ++i) {
-                allFilteredPts.push_back(allScenePts[i]);
-            }
+        // Se ci sono punti validi dopo il filtro globale, crea detection
+        if (!finalFilteredPts.empty()) {
+            Rect mergedBox = boundingRect(finalFilteredPts);
+            detections.emplace_back(mergedBox, model.name);
 
-            // Draw bounding box around all matched points
-            if (!allFilteredPts.empty()) {
-                Rect mergedBox = boundingRect(allFilteredPts);
-                detections.emplace_back(mergedBox, model.name);
+            Mat outputScene = scene.clone();
+            rectangle(outputScene, mergedBox, Scalar(0, 255, 0), 2);
 
-                cout << "Detected " << model.name << " in " << sceneName
-                     << " across " << allGoodMatches.size() << " views" << endl;
+            for (const auto &pt : finalFilteredPts)
+                circle(outputScene, pt, 3, Scalar(0, 255, 0), -1);  // green = valid
 
-                // Optionally, draw the bounding box on the scene image
-                Mat outputScene = scene.clone();
-                rectangle(outputScene, mergedBox, Scalar(0, 255, 0), 2);
-                string outPath = matchDir + sceneName + "_" + model.name + "_final_detection.png";
-                imwrite(outPath, outputScene);
-                cout << "Saved final detection image: " << outPath << endl;
-            }
+            for (const auto &pt : discardedPtsGlobal)
+                circle(outputScene, pt, 5, Scalar(0, 0, 255), -1);  // red = scartati
+
+            string outPath = matchDir + sceneName + "_" + model.name + "_final_detection.png";
+            imwrite(outPath, outputScene);
+            cout << "Saved global detection image: " << outPath << endl;
         }
     }
 
     return detections;
 }
+
+
