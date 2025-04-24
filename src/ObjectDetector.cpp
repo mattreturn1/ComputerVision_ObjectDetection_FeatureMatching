@@ -7,8 +7,8 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 
-// FUNZIONE Mattia
-/*
+
+/* // FUNZIONE Mattia
 vector<pair<Rect, string>> detectObjects(
     const Mat &scene,
     const string &sceneName,
@@ -306,6 +306,7 @@ vector<pair<Rect, string>> detectObjects(
     return detections;
 }
 */
+
 vector<pair<Rect, string>> detectObjects(
     const Mat &scene,
     const string &sceneName,
@@ -313,12 +314,14 @@ vector<pair<Rect, string>> detectObjects(
     Ptr<Feature2D> &detector,
     DetectorType type
 ) {
-    const float MATCH_RATIO_THRESHOLD = 0.85f;
+    const float MATCH_RATIO_THRESHOLD = 0.75f;
     const int MIN_INLIERS = 4;
     const double RANSAC_THRESHOLD = 4.0;
     const float HOMOGRAPHY_DET_THRESHOLD = 0.1;
     const float HOMOGRAPHY_DET_UPPER_THRESHOLD = 10.0;
     const float MAX_POINT_DISTANCE = 100.0f;
+    const float MIN_BBOX_AREA = 100.0f;
+
 
     Mat preprocessedScene = preprocessImage(scene);
     vector<pair<Rect, string>> detections;
@@ -435,20 +438,22 @@ vector<pair<Rect, string>> detectObjects(
 
             if (!finalFilteredPts.empty()) {
                 Rect mergedBox = boundingRect(finalFilteredPts);
-                detections.emplace_back(mergedBox, model.name);
+                if (mergedBox.area() >= MIN_BBOX_AREA) {
+                    detections.emplace_back(mergedBox, model.name);
 
-                Mat outputScene = scene.clone();
-                rectangle(outputScene, mergedBox, Scalar(0, 255, 0), 2);
+                    Mat outputScene = scene.clone();
+                    rectangle(outputScene, mergedBox, Scalar(0, 255, 0), 2);
 
-                for (const auto &pt : finalFilteredPts)
-                    circle(outputScene, pt, 3, Scalar(0, 255, 0), -1);  // green = valid
+                    for (const auto &pt : finalFilteredPts)
+                        circle(outputScene, pt, 3, Scalar(0, 255, 0), -1);  // green = valid
 
-                for (const auto &pt : discardedPtsGlobal)
-                    circle(outputScene, pt, 5, Scalar(0, 0, 255), -1);  // red = discarded
+                    for (const auto &pt : discardedPtsGlobal)
+                        circle(outputScene, pt, 5, Scalar(0, 0, 255), -1);  // red = discarded
 
-                string outPath = matchDir + sceneName + "_" + model.name + "_final_detection.png";
-                imwrite(outPath, outputScene);
-                cout << "Saved global detection image: " << outPath << endl;
+                    string outPath = matchDir + sceneName + "_" + model.name + "_final_detection.png";
+                    imwrite(outPath, outputScene);
+                    cout << "Saved global detection image: " << outPath << endl;
+                }
             }
         }
     }
