@@ -1,3 +1,5 @@
+//Francesco Campigotto
+
 #ifndef TESTS_DETECTOR_HPP
 #define TESTS_DETECTOR_HPP
 

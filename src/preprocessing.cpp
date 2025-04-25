@@ -1,3 +1,5 @@
+//Mattia Cozza
+
 #include "preprocessing.hpp"
 
 // Preprocess image: convert to grayscale if it's a color image

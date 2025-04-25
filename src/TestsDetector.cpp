@@ -1,3 +1,5 @@
+//Francesco Campigotto
+
 #include "TestsDetector.hpp"
 #include "preprocessing.hpp"
 #include <iostream>

@@ -1,3 +1,5 @@
+//Mattia Cozza
+
 #include "ModelsDetector.hpp"
 #include "preprocessing.hpp"
 #include <iostream>

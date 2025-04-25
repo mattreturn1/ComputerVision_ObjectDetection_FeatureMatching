@@ -1,3 +1,5 @@
+//Francesco Campigotto
+
 #include "Output.hpp"
 #include "TestsDetector.hpp"
 #include <iostream>

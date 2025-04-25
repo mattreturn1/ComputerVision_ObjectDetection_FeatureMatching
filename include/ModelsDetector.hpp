@@ -1,3 +1,5 @@
+//Mattia Cozza
+
 #ifndef MODELS_DETECTOR_HPP
 #define MODELS_DETECTOR_HPP
 

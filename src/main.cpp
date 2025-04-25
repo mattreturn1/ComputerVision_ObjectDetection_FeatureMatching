@@ -1,3 +1,5 @@
+//Mattia Cozza
+
 #include <opencv2/opencv.hpp>
 #include <filesystem>
 #include <iostream>

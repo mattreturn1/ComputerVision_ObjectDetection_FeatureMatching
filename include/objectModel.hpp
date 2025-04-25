@@ -1,3 +1,5 @@
+//Mattia Cozza
+
 #ifndef OBJECTMODEL_HPP
 #define OBJECTMODEL_HPP
 
