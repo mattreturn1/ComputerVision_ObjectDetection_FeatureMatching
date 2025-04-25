@@ -15,7 +15,7 @@ int main() {
     Ptr<Feature2D> detector = SIFT::create();
 
     vector<ObjectModel> models;
-    string dataPath = "./data/";
+    const string dataPath = "./data/";
     processAllModelsImages(dataPath, models, detector);
 
     processAllTestImages(dataPath, models, detector);

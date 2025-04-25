@@ -18,14 +18,14 @@ vector<pair<Rect, string>> detectObjects(
     Ptr<Feature2D> &detector
 ) {
     // Configuration constants: Define thresholds, parameters, and limits for various processing steps
-    const float MATCH_RATIO_THRESHOLD = 0.85f;  // For matching descriptors
-    const int MIN_INLIERS = 4;  // Minimum inliers for homography validation
-    const double RANSAC_THRESHOLD = 5.0;  // Threshold for RANSAC homography estimation
-    const float HOMOGRAPHY_DET_THRESHOLD = 0.1;  // Lower limit for homography determinant
-    const float HOMOGRAPHY_DET_UPPER_THRESHOLD = 10.0;  // Upper limit for homography determinant
-    const float CLUSTER_DISTANCE_THRESHOLD = 20.0f;  // Distance threshold for clustering
-    const int MIN_POINTS_PER_CLUSTER = 20;  // Minimum number of points to consider a valid cluster
-    const float BOX_MERGE_DISTANCE = 250.0f;  // Maximum distance between bounding boxes for merging
+    constexpr float MATCH_RATIO_THRESHOLD = 0.85f;  // For matching descriptors
+    constexpr int MIN_INLIERS = 4;  // Minimum inliers for homography validation
+    constexpr double RANSAC_THRESHOLD = 5.0;  // Threshold for RANSAC homography estimation
+    constexpr float HOMOGRAPHY_DET_THRESHOLD = 0.1;  // Lower limit for homography determinant
+    constexpr float HOMOGRAPHY_DET_UPPER_THRESHOLD = 10.0;  // Upper limit for homography determinant
+    constexpr float CLUSTER_DISTANCE_THRESHOLD = 20.0f;  // Distance threshold for clustering
+    constexpr int MIN_POINTS_PER_CLUSTER = 20;  // Minimum number of points to consider a valid cluster
+    constexpr float BOX_MERGE_DISTANCE = 250.0f;  // Maximum distance between bounding boxes for merging
     const int MAX_BOX_AREA = 1600;  // Maximum allowed area for valid bounding boxes
     const float DYNAMIC_MARGIN = 0.8f;  // Factor for dynamic margin based on points' standard deviation
 
@@ -45,11 +45,11 @@ vector<pair<Rect, string>> detectObjects(
         vector<Point2f> allUnfilteredScenePts;  // Holds all matched points from scene
         vector<Point2f> discardedPtsGlobal;  // Points that do not belong to valid clusters
 
-        // Multi-scale detection for matching object model with scene
+        // Multiscale detection for matching object model with scene
         auto detectAtScale = [&](const Mat& sceneImg, const vector<KeyPoint>& kp, const Mat& desc, float scale = 1.0f) {
             // Function to detect objects at different scales (zoom in/out)
-            vector<KeyPoint> sceneKP = kp;
-            Mat sceneDesc = desc;
+            const vector<KeyPoint>& sceneKP = kp;
+            const Mat& sceneDesc = desc;
 
             auto scalePoints = [scale](vector<Point2f>& points) {
                 if (scale != 1.0f) {
@@ -84,17 +84,15 @@ vector<pair<Rect, string>> detectObjects(
                 Mat H = findHomography(objPts, scenePts, RANSAC, RANSAC_THRESHOLD, inlierMask);
                 if (H.empty()) continue;
 
-                int inlierCount = countNonZero(inlierMask);
-                if (inlierCount < MIN_INLIERS) continue;
+                if (int inlierCount = countNonZero(inlierMask); inlierCount < MIN_INLIERS) continue;
 
                 // Validate homography determinant
-                double detH = fabs(determinant(H));
-                if (detH < HOMOGRAPHY_DET_THRESHOLD || detH > HOMOGRAPHY_DET_UPPER_THRESHOLD) continue;
+                if (double detH = fabs(determinant(H)); detH < HOMOGRAPHY_DET_THRESHOLD || detH > HOMOGRAPHY_DET_UPPER_THRESHOLD) continue;
 
                 // Store inlier points for clustering later
                 vector<Point2f> currentScenePts;
                 for (size_t j = 0; j < scenePts.size(); ++j) {
-                    if (inlierMask.at<uchar>(j)) {
+                    if (inlierMask.at<uchar>(static_cast<int>(j))) {
                         currentScenePts.push_back(scenePts[j]);
                     }
                 }
@@ -155,8 +153,7 @@ vector<pair<Rect, string>> detectObjects(
 
                     vector<size_t> toRemove;
                     for (size_t otherIdx : unassignedPoints) {
-                        float dist = norm(allUnfilteredScenePts[currentIdx] - allUnfilteredScenePts[otherIdx]);
-                        if (dist <= CLUSTER_DISTANCE_THRESHOLD) {
+                        if (float dist = static_cast<float>(norm(allUnfilteredScenePts[currentIdx] - allUnfilteredScenePts[otherIdx])); dist <= CLUSTER_DISTANCE_THRESHOLD) {
                             currentCluster.push_back(allUnfilteredScenePts[otherIdx]);
                             toExplore.push(otherIdx);
                             toRemove.push_back(otherIdx);
@@ -186,7 +183,7 @@ vector<pair<Rect, string>> detectObjects(
 
                     for (size_t i = 0; i < cluster.size(); ++i) {
                         for (size_t j = i + 1; j < cluster.size(); ++j) {
-                            float dist = norm(cluster[i] - cluster[j]);
+                            float dist = static_cast<float>(norm(cluster[i] - cluster[j]));
                             distances.push_back(dist);
                             meanDist += dist;
                         }
@@ -194,21 +191,21 @@ vector<pair<Rect, string>> detectObjects(
 
                     // Calculate the standard deviation of distances for dynamic margin
                     if (!distances.empty()) {
-                        meanDist /= distances.size();
+                        meanDist /= static_cast<float>(distances.size());
                     }
 
                     float variance = 0.0f;
                     for (const float& dist : distances) {
-                        variance += pow(dist - meanDist, 2);
+                        variance += static_cast<float>(pow(dist - meanDist, 2));
                     }
-                    float stdDev = sqrt(variance / distances.size());
+                    float stdDev = sqrt(variance / static_cast<float>(distances.size()));
 
                     // Apply dynamic margin to the bounding box
                     float margin = stdDev * DYNAMIC_MARGIN;
-                    box.x -= margin;
-                    box.y -= margin;
-                    box.width += 2 * margin;
-                    box.height += 2 * margin;
+                    box.x -= static_cast<int>(margin);
+                    box.y -= static_cast<int>(margin);
+                    box.width += static_cast<int>(2 * margin);
+                    box.height += static_cast<int>(2 * margin);
 
                     clusterBoxes.push_back(box);
                 }
@@ -231,10 +228,10 @@ vector<pair<Rect, string>> detectObjects(
 
                             for (size_t j = 0; j < clusterBoxes.size(); ++j) {
                                 if (!processed[j]) {
-                                    Point2f center1(clusterBoxes[current].x + clusterBoxes[current].width / 2.0f,
-                                                     clusterBoxes[current].y + clusterBoxes[current].height / 2.0f);
-                                    Point2f center2(clusterBoxes[j].x + clusterBoxes[j].width / 2.0f,
-                                                     clusterBoxes[j].y + clusterBoxes[j].height / 2.0f);
+                                    Point2f center1(static_cast<float>(clusterBoxes[current].x) + static_cast<float>(clusterBoxes[current].width) / 2.0f,
+                                                     static_cast<float>(clusterBoxes[current].y) + static_cast<float>(clusterBoxes[current].height) / 2.0f);
+                                    Point2f center2(static_cast<float>(clusterBoxes[j].x) + static_cast<float>(clusterBoxes[j].width) / 2.0f,
+                                                     static_cast<float>(clusterBoxes[j].y) + static_cast<float>(clusterBoxes[j].height) / 2.0f);
 
                                     if (norm(center1 - center2) <= BOX_MERGE_DISTANCE) {
                                         processed[j] = true;
