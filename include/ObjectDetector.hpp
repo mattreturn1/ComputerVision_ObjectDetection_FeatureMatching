@@ -6,28 +6,13 @@
 #include <vector>
 #include <string>
 
-enum DetectorType {
-    SIFT_DETECTOR,
-    ORB_DETECTOR,
-    FAST_BRIEF_DETECTOR,
-    BRISK_DETECTOR,
-    AKAZE_DETECTOR,
-    KAZE_DETECTOR
-};
-
-struct ObjectModel {
-    std::string name;
-    std::vector<cv::Mat> images;
-    std::vector<std::vector<cv::KeyPoint> > keypoints;
-    std::vector<cv::Mat> descriptors;
-};
+#include "objectModel.hpp"
 
 std::vector<std::pair<cv::Rect, std::string> > detectObjects(
     const cv::Mat &scene,
     const std::string &sceneName,
     const std::vector<ObjectModel> &models,
-    cv::Ptr<cv::Feature2D> &detector,
-    DetectorType type
+    cv::Ptr<cv::Feature2D> &detector
 );
 
 #endif

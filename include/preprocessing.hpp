@@ -1,5 +1,5 @@
-#ifndef FILTER_HPP
-#define FILTER_HPP
+#ifndef PREPROCESSING_HPP
+#define PREPROCESSING_HPP
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/opencv.hpp>
@@ -9,4 +9,4 @@ using namespace std;
 
 Mat preprocessImage(const Mat &image);
 
-#endif //FILTER_HPP
+#endif

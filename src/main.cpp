@@ -1,25 +1,24 @@
 #include <opencv2/opencv.hpp>
-#include "FeatureFactory.hpp"
-#include "Preprocessing.hpp"
-#include "Output.hpp"
 #include <filesystem>
 #include <iostream>
+
+#include "ModelsDetector.hpp"
+#include "Output.hpp"
 
 namespace fs = std::filesystem;
 using namespace std;
 using namespace cv;
 
-//TODO PASS AS ARGS
+//TODO pass data_path as args
 
 int main() {
-    DetectorType detectorChoice = SIFT_DETECTOR;
-    Ptr<Feature2D> detector = createFeatureDetector(detectorChoice);
+    Ptr<Feature2D> detector = SIFT::create();
 
     vector<ObjectModel> models;
     string dataPath = "./data/";
-    computingModels(dataPath, models, detector);
+    processAllModelsImages(dataPath, models, detector);
 
-    processAllTestImages(dataPath, models, detector, detectorChoice);
+    processAllTestImages(dataPath, models, detector);
 
     cout << "Detection complete. Results saved in ./output/ directory." << endl;
     return 0;

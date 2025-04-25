@@ -1,4 +1,5 @@
 #include "Output.hpp"
+#include "ObjectDetector.hpp"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -32,8 +33,7 @@ void drawBoundingBoxes(Mat& image, const vector<pair<Rect, string>>& detections)
 void processAllTestImages(
     const string& basePath,
     const vector<ObjectModel>& models,
-    Ptr<Feature2D>& detector,
-    DetectorType type
+    Ptr<Feature2D>& detector
 ) {
     vector<string> objectFolders = {"004_sugar_box","006_mustard_bottle","035_power_drill"};
 
@@ -57,7 +57,7 @@ void processAllTestImages(
             string sceneName = entry.path().stem().string();
             cout << "\nProcessing scene: " << sceneName << endl;
 
-            auto detections = detectObjects(scene, sceneName, models, detector, type);
+            auto detections = detectObjects(scene, sceneName, models, detector);
 
             // Save results
             string resultFile = "./output/" + sceneName + "_results.txt";
