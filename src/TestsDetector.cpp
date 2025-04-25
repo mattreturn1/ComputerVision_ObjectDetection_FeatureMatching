@@ -1,4 +1,4 @@
-#include "ObjectDetector.hpp"
+#include "TestsDetector.hpp"
 #include "preprocessing.hpp"
 #include <iostream>
 #include <filesystem>

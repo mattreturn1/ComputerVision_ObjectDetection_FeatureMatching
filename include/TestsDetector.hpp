@@ -1,5 +1,5 @@
-#ifndef OBJECT_DETECTOR_HPP
-#define OBJECT_DETECTOR_HPP
+#ifndef TESTS_DETECTOR_HPP
+#define TESTS_DETECTOR_HPP
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>

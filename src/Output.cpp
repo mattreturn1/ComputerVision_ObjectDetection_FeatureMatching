@@ -1,5 +1,5 @@
 #include "Output.hpp"
-#include "ObjectDetector.hpp"
+#include "TestsDetector.hpp"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
