@@ -3,7 +3,6 @@
 #include "metrics.h"
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <iostream>
 #include <numeric>
 
@@ -43,10 +42,9 @@ float compute_intersection_over_union(const std::string& ground_truth_path, cons
 		for (const std::pair<const std::string, std::vector<int>>& object_box : object_boxes) {
             const std::string& object_id = object_box.first;
             float iou = compute_iou_if_present(object_id, object_box.second, predicted_boxes[file_id]);
-
+			++count;
             if (iou > 0.0f) {
             	total_iou += iou;
-            	++count;
         	} else {
             	std::cout << "No prediction for: " << object_id << std::endl;
         	}
@@ -118,8 +116,8 @@ float compute_detection_accuracy(const std::string& dataset_path, const std::str
             fs::path ground_truth_path = object_class.path() / ground_truths_path;
             fs::path prediction_path = fs::path(output_path) / object_class.path().filename();
 
-            std::map<std::string, std::map<std::string, std::vector<int>>> ground_truth_boxes = read_boxes_coordinates(ground_truth_path);
-    		std::map<std::string, std::map<std::string, std::vector<int>>> predicted_boxes = read_boxes_coordinates(prediction_path);
+            std::map<std::string, std::map<std::string, std::vector<int>>> ground_truth_boxes = read_boxes_coordinates(ground_truth_path.string());
+    		std::map<std::string, std::map<std::string, std::vector<int>>> predicted_boxes = read_boxes_coordinates(prediction_path.string());
 
             for (const std::pair<const std::string, std::map<std::string, std::vector<int>>>& pair : ground_truth_boxes) {
                 const std::string& file_id = pair.first;

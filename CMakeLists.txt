@@ -15,6 +15,7 @@ set(SOURCES
         src/ModelsDetector.cpp
         src/TestsDetector.cpp
         src/Output.cpp
+        src/metrics.cpp
         src/main.cpp
 )
 

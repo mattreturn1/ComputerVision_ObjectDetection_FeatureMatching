@@ -13,12 +13,11 @@ using namespace std;
 //TODO CONTROL id
 void saveDetections(const string& filepath, const vector<pair<Rect, string>>& detections) {
     ofstream file(filepath);
-    int id = 0;
     for (const auto& [box, name] : detections) {
-        file << id++ << "_" << name << " "
+        file << name << " "
              << box.x << " " << box.y << " "
              << box.x + box.width << " " << box.y + box.height
-             << " 1\n";
+             << "\n";
     }
 }
 
@@ -46,6 +45,9 @@ void processAllTestImages(
         if (!fs::exists(testImagesPath)) continue;
 
         for (const auto& entry : fs::directory_iterator(testImagesPath)) {
+
+            if (!fs::exists("./output/"+folder)) fs::create_directory("./output/"+folder);
+
             if (entry.path().extension() != ".jpg" && entry.path().extension() != ".png")
                 continue;
 
@@ -61,8 +63,7 @@ void processAllTestImages(
 
             auto detections = detectObjects(scene, sceneName, models, detector);
 
-            // Save results
-            string resultFile = "./output/" + sceneName + "_results.txt";
+            string resultFile = "./output/" + folder + "/" + sceneName + "_results.txt";
             saveDetections(resultFile, detections);
 
             Mat colorScene = scene.clone();
