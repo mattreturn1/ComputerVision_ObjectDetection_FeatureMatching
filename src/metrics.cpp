@@ -51,7 +51,7 @@ float compute_intersection_over_union(const std::string& ground_truth_path, cons
         }
     }
 
-    return count > 0 ? total_iou / count : 0.0f;
+    return count > 0 ? total_iou / static_cast<float>(count) : 0.0f;
 }
 
 // Reads bounding box coordinates from a directory of text files into a map
@@ -138,5 +138,5 @@ float compute_detection_accuracy(const std::string& dataset_path, const std::str
     	}
 	}
 
-    return total_objects > 0 ? static_cast<float>(true_positives) / total_objects : 0.0f;
+    return total_objects > 0 ? static_cast<float>(true_positives) / static_cast<float>(total_objects) : 0.0f;
 }
