@@ -1,7 +1,7 @@
-// Michele Brigandì
+//Michele Brigandì
 
-#ifndef METRICS_H
-#define METRICS_H
+#ifndef METRICS_HPP
+#define METRICS_HPP
 
 #include <string>
 #include <vector>
@@ -22,4 +22,4 @@ float calculate_intersection_and_union_areas(const std::vector<int>& first_box, 
 float compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
                                  const std::string& ground_truths_path = "labels");
 
-#endif // METRICS_H
+#endif

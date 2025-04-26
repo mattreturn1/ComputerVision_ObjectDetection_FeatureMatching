@@ -4,26 +4,22 @@ project(IntermediateProjectCV)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Percorso per OpenCV — personalizza se necessario
-set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib")
+set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib") #TODO change with VM path
 find_package(OpenCV REQUIRED)
 
-# Includi la cartella headers
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Aggiungi tutti i file sorgente
 set(SOURCES
-        src/ObjectDetector.cpp
-        src/FeatureFactory.cpp
-        src/main.cpp
-        src/Preprocessing.cpp
-        src/Filter.cpp
+        src/preprocessing.cpp
+        src/utils.cpp
+        src/ModelsDetector.cpp
+        src/TestsDetector.cpp
         src/Output.cpp
+        src/metrics.cpp
+        src/main.cpp
 )
 
-# Crea l'eseguibile
 add_executable(IntermediateProjectCV ${SOURCES})
 
-# Linka OpenCV
 target_link_libraries(IntermediateProjectCV ${OpenCV_LIBS})

@@ -1,26 +1,35 @@
+//Mattia Cozza
+
 #include <opencv2/opencv.hpp>
-#include "FeatureFactory.hpp"
-#include "Preprocessing.hpp"
-#include "Output.hpp"
 #include <filesystem>
 #include <iostream>
+
+#include "ModelsDetector.hpp"
+#include "Output.hpp"
+#include "metrics.hpp"
 
 namespace fs = std::filesystem;
 using namespace std;
 using namespace cv;
 
-//TODO PASS AS ARGS
-
 int main() {
-    DetectorType detectorChoice = SIFT_DETECTOR;
-    Ptr<Feature2D> detector = createFeatureDetector(detectorChoice);
+    Ptr<Feature2D> detector = SIFT::create();
 
     vector<ObjectModel> models;
-    string dataPath = "./data/";
-    computingModels(dataPath, models, detector);
+    const string dataPath = "./data/";
+    const string outputPath = "./output/";
+    processAllModelsImages(dataPath, models, detector);
 
-    processAllTestImages(dataPath, models, detector, detectorChoice);
+    processAllTestImages(dataPath, models, detector);
 
     cout << "Detection complete. Results saved in ./output/ directory." << endl;
+
+    const float meanIoU = compute_mean_intersection_over_union(dataPath, outputPath);
+
+    const float accuracy = compute_detection_accuracy(dataPath, outputPath);
+
+    cout << "Mean IoU: " << meanIoU << endl;
+    cout << "Detection Accuracy: " << accuracy << endl;
+
     return 0;
 }
