@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
         src/preprocessing.cpp
+        src/utils.cpp
         src/ModelsDetector.cpp
         src/TestsDetector.cpp
         src/Output.cpp
