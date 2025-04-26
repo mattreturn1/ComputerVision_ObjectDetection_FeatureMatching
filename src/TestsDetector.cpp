@@ -14,7 +14,6 @@ using namespace std;
 
 vector<pair<Rect, string>> detectObjects(
     const Mat &scene,
-    const string &sceneName,
     const vector<ObjectModel> &models,
     Ptr<Feature2D> &detector
 ) {
@@ -41,7 +40,7 @@ vector<pair<Rect, string>> detectObjects(
         vector<Point2f> discardedPtsGlobal;  // Points that do not belong to valid clusters
 
         // Multiscale detection for matching object model with scene
-        auto detectAtScale = [&](const Mat& sceneImg, const vector<KeyPoint>& kp, const Mat& desc, float scale = 1.0f) {
+        auto detectAtScale = [&](const Mat&, const vector<KeyPoint>& kp, const Mat& desc, float scale = 1.0f) {
             // Function to detect objects at different scales (zoom in/out)
             const vector<KeyPoint>& sceneKP = kp;
             const Mat& sceneDesc = desc;
@@ -97,7 +96,7 @@ vector<pair<Rect, string>> detectObjects(
         };
 
         // Process the scene at different scales for better object detection accuracy
-        vector<float> scales = {0.7f, 0.85f, 1.0f, 1.15f, 1.3f};
+        vector scales = {0.7f, 0.85f, 1.0f, 1.15f, 1.3f};
         for (float scale : scales) {
             Mat scaledScene;
             resize(preprocessedScene, scaledScene, Size(), scale, scale);

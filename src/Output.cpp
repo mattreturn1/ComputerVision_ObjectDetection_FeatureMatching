@@ -41,7 +41,7 @@ void processAllTestImages(
             string sceneName = entry.path().stem().string();
             cout << "\nProcessing scene: " << sceneName << endl;
 
-            auto detections = detectObjects(scene, sceneName, models, detector);
+            auto detections = detectObjects(scene, models, detector);
 
             string resultFile = "./output/" + folder + "/" + sceneName + "_results.txt";
             saveDetections(resultFile, detections);

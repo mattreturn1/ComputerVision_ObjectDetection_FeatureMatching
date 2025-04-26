@@ -12,7 +12,6 @@
 
 std::vector<std::pair<cv::Rect, std::string> > detectObjects(
     const cv::Mat &scene,
-    const std::string &sceneName,
     const std::vector<ObjectModel> &models,
     cv::Ptr<cv::Feature2D> &detector
 );
