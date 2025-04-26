@@ -12,8 +12,6 @@ namespace fs = std::filesystem;
 using namespace std;
 using namespace cv;
 
-//TODO pass data_path as args
-
 int main() {
     Ptr<Feature2D> detector = SIFT::create();
 
