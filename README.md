@@ -1,77 +1,34 @@
-# Object Detection Pipeline Overview
+## Installation & Execution Pipeline
+Follow these steps to set up and run the project:
 
-## MODULE 1 — Preprocessing (MATTIA)
+### 1. Download and Extract
 
-**Include Parser for Train/Mask Images**
+- Download the zip file and extracts it in the desired folder
 
-Steps:
-- For each object, read all available images.
-- Extract keypoints and descriptors from each view using the preferred feature extraction algorithm.
-- Store the keypoints and descriptors in a `std::vector` or `std::map` for quick access.
-- *(Optional)*: If masks are used for models, integrate mask-based filtering.
-- *(Optional)*: Save the extracted keypoints and descriptors into `.txt` files as a map for future reuse.
+### 2. Open a Terminal in the Project Folder
 
----
+- If using a GUI, right-click inside the folder and select "Open in Terminal".
 
-## MODULE 2 — Detection (FRANCESCO)
+### Alternatively, use the terminal command:
 
-**Include Parser for Test Images**
+- cd /path/to/yourrepo-main
 
-Steps for Each Test Image:
-- Convert the input image to grayscale.
-- Detect keypoints and compute descriptors using the preferred algorithm.
-- Loop through all object views:
-    - Match descriptors using `BFMatcher` (Brute-Force) with **Euclidean distance (NORM_L2)**.  
-      *(Other matching strategies can be considered.)*
-    - Filter matches. If enough good matches are found:
-        - Compute the **Homography matrix** using `findHomography()` with **RANSAC**.
-        - Use `perspectiveTransform()` to calculate the projected bounding box coordinates in the scene.
+### 3. Launch the OpenCV Singularity Environment on the VM
 
----
-## (MICHELE)
-## MODULE 3 — Output
+- Run the following command to enter the Singularity container:
 
-**Result Export**
+  start_opencv
 
-- Write bounding box information to a `.txt` file using the following format:
-```
-<object_id>_<object_name> <xmin> <ymin> <xmax> <ymax> <is_present>
-```
+### 4. Build the Project with CMake
 
----
+#### Generate the Makefile
 
-## MODULE 4 — Drawing
+- cmake .
 
-**Visualization**
+#### Compile the project
 
-- Draw the predicted bounding boxes on the image using `rectangle()`.
-- Label each bounding box using `putText()` with the object name or ID.
+- make
 
----
+### 5. Run the Executable
 
-## MODULE 5 — Metrics
-
-**Evaluation**
-
-- **Mean Intersection over Union (mIoU)**:  
-  Calculate the average IoU across all object categories.
-- **Detection Accuracy**:  
-  Count the number of object instances correctly recognized per category.  
-  An object is considered **correctly detected (true positive)** if the predicted and ground truth bounding boxes have:
-```
-IoU > 0.5
-```
-
----
-### Notes
-
-- Retrieve all **good matches** for each model of the same object and place them in **our view**.
-- A test contains **all features** for **all views** for **all objects**.
-- Set a **low max distance** so that the most recurring points are detected as valid boxes, while distant/noisy points are filtered out.
-- **Unexpected boxes** may occur due to merges between nearby boxes of different objects (controlled by a **box border distance parameter**).
-- Collect all the boxes and **remove those that are too small** (controlled by a **box area parameter**).
-
-
-
-
-
+- ./IntermediateProjectCV
