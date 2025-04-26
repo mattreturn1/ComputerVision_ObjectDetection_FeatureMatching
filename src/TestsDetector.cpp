@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 using namespace cv;
 using namespace std;
 
-//TODO removes matches images
 vector<pair<Rect, string>> detectObjects(
     const Mat &scene,
     const string &sceneName,
@@ -29,17 +28,11 @@ vector<pair<Rect, string>> detectObjects(
     constexpr int MIN_POINTS_PER_CLUSTER = 20;  // Minimum number of points to consider a valid cluster
     constexpr float BOX_MERGE_DISTANCE = 250.0f;  // Maximum distance between bounding boxes for merging
     const int MAX_BOX_AREA = 1600;  // Maximum allowed area for valid bounding boxes
-    const float DYNAMIC_MARGIN = 0.8f;  // Factor for dynamic margin based on points' standard deviation
+    const float DYNAMIC_MARGIN = 1.5f;  // Factor for dynamic margin based on points' standard deviation
 
     // Preprocess the scene for object detection
     Mat preprocessedScene = preprocessImage(scene);
     vector<pair<Rect, string>> detections;
-
-    // Create output directory for saving match images
-    string matchDir = "./output/matches/";
-    if (!fs::exists(matchDir)) {
-        fs::create_directories(matchDir);
-    }
 
     BFMatcher matcher(NORM_L2);  // Feature matcher using L2 norm
 
@@ -100,21 +93,6 @@ vector<pair<Rect, string>> detectObjects(
                 }
                 scalePoints(currentScenePts);  // Adjust points for scale
                 allUnfilteredScenePts.insert(allUnfilteredScenePts.end(), currentScenePts.begin(), currentScenePts.end());
-
-                // Save the match images for visualization
-                Mat matchImg;
-                drawMatches(
-                    model.images[i], model.keypoints[i],
-                    sceneImg, sceneKP,
-                    goodMatches,
-                    matchImg,
-                    Scalar::all(-1), Scalar::all(-1),
-                    vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-                );
-                string outPath = matchDir + sceneName + "_" + model.name + "_view" + to_string(i);
-                if (scale != 1.0f) outPath += "_scale" + to_string(scale);
-                outPath += ".png";
-                imwrite(outPath, matchImg);
             }
         };
 
@@ -294,10 +272,6 @@ vector<pair<Rect, string>> detectObjects(
                 for (const auto& pt : discardedPtsGlobal) {
                     circle(outputScene, pt, 5, Scalar(0, 0, 255), -1);
                 }
-
-                string outPath = matchDir + sceneName + "_" + model.name + "_final_detection.png";
-                imwrite(outPath, outputScene);
-                cout << "Saved detection visualization: " << outPath << endl;
             }
         }
     }
