@@ -104,45 +104,9 @@ float calculate_intersection_and_union_areas(const std::vector<int>& first_box, 
 
     return static_cast<float>(intersection_area) / static_cast<float>(union_area);
 }
-/*
-// Computes detection accuracy based on IoU thresholding (IoU > 0.5 is a true positive)
-float compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
-                                 const std::string& ground_truths_path) {
-	int total_objects = 0;
-	int true_positives = 0;
 
-    for (const fs::directory_entry& object_class : fs::directory_iterator(dataset_path)) {
-        if (object_class.is_directory()) {
-            fs::path ground_truth_path = object_class.path() / ground_truths_path;
-            fs::path prediction_path = fs::path(output_path) / object_class.path().filename();
-
-            std::map<std::string, std::map<std::string, std::vector<int>>> ground_truth_boxes = read_boxes_coordinates(ground_truth_path.string());
-    		std::map<std::string, std::map<std::string, std::vector<int>>> predicted_boxes = read_boxes_coordinates(prediction_path.string());
-
-            for (const std::pair<const std::string, std::map<std::string, std::vector<int>>>& pair : ground_truth_boxes) {
-                const std::string& file_id = pair.first;
-                const std::map<std::string, std::vector<int>>& object_boxes = pair.second;
-
-				for (const std::pair<const std::string, std::vector<int>>& object_box : object_boxes) {
-            		const std::string& object_id = object_box.first;
-            		float iou = compute_iou_if_present(object_id, object_box.second, predicted_boxes[file_id]);
-		            ++total_objects;
-
-                	if (iou >= 0.5f) {
-                    	++true_positives;
-                	} else {
-                    	std::cout << "Object " << object_id << " in file " << file_id << " isn't a true positive" << std::endl;
-                	}
-            	}
-        	}
-    	}
-	}
-
-    return total_objects > 0 ? static_cast<float>(true_positives) / static_cast<float>(total_objects) : 0.0f;
-}*/
-// Computes detection accuracy for each object category based on IoU thresholding (IoU > 0.5 is a true positive)
 std::map<std::string, float> compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
-                                                         const std::string& ground_truths_path) {
+                                                     const std::string& ground_truths_path) {
     std::map<std::string, int> total_objects_by_class;
     std::map<std::string, int> true_positives_by_class;
 
@@ -153,30 +117,57 @@ std::map<std::string, float> compute_detection_accuracy(const std::string& datas
             fs::path ground_truth_path = object_class.path() / ground_truths_path;
             fs::path prediction_path = fs::path(output_path) / object_class.path().filename();
 
+            // Read bounding boxes for ground truths and predictions
             std::map<std::string, std::map<std::string, std::vector<int>>> ground_truth_boxes = read_boxes_coordinates(ground_truth_path.string());
             std::map<std::string, std::map<std::string, std::vector<int>>> predicted_boxes = read_boxes_coordinates(prediction_path.string());
 
+            // Iterate through the ground truth boxes and compare with the predicted boxes
             for (const auto& pair : ground_truth_boxes) {
                 const std::string& file_id = pair.first;
                 const std::map<std::string, std::vector<int>>& object_boxes = pair.second;
 
+                // Debug: Check the number of objects in this file
+                std::cout << "In file " << file_id << ", found " << object_boxes.size() << " ground truth objects." << std::endl;
+
                 for (const auto& object_box : object_boxes) {
                     const std::string& object_id = object_box.first;
-                    float iou = compute_iou_if_present(object_id, object_box.second, predicted_boxes[file_id]);
+                    std::string class_name = object_id.substr(0, object_id.find('_'));  // Get the class from the object ID (e.g., "004" from "004_sugar_box")
 
-                    ++total_objects_by_class[object_class_name];  // Increment total objects for this category
+                    // Increment total object count for the object class
+                    ++total_objects_by_class[class_name];
 
-                    if (iou >= 0.5f) {
-                        ++true_positives_by_class[object_class_name];  // Increment true positives for this category
+                    // Debug: Print the object ID being processed
+                    std::cout << "Processing object " << object_id << " in class " << class_name << std::endl;
+
+                    // Check if there is a predicted box for the same file and object ID
+                    if (predicted_boxes.find(file_id) != predicted_boxes.end() &&
+                        predicted_boxes[file_id].find(object_id) != predicted_boxes[file_id].end()) {
+                        // Get the predicted box for the current object
+                        float iou = compute_iou_if_present(object_id, object_box.second, predicted_boxes[file_id]);
+
+                        // If IoU >= 0.5, consider it a true positive for this class
+                        if (iou >= 0.5f) {
+                            ++true_positives_by_class[class_name];
+                        } else {
+                            std::cout << "Object " << object_id << " in file " << file_id << " isn't a true positive" << std::endl;
+                        }
                     } else {
-                        std::cout << "Object " << object_id << " in file " << file_id << " isn't a true positive" << std::endl;
+                        std::cout << "No prediction found for object " << object_id << " in file " << file_id << std::endl;
                     }
                 }
             }
         }
     }
 
-    // Calculate detection accuracy for each category
+    // Debug output: print True Positives and Total Objects for each class
+    for (const auto& class_entry : total_objects_by_class) {
+        const std::string& class_name = class_entry.first;
+        std::cout << "Class: " << class_name << std::endl;
+        std::cout << "True Positives: " << true_positives_by_class[class_name] << std::endl;
+        std::cout << "Total Objects: " << class_entry.second << std::endl;
+    }
+
+    // Return accuracy by class
     std::map<std::string, float> accuracy_by_class;
     for (const auto& class_entry : total_objects_by_class) {
         const std::string& class_name = class_entry.first;
