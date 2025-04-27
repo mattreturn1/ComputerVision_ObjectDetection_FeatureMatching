@@ -104,7 +104,7 @@ float calculate_intersection_and_union_areas(const std::vector<int>& first_box, 
 
     return static_cast<float>(intersection_area) / static_cast<float>(union_area);
 }
-
+/*
 // Computes detection accuracy based on IoU thresholding (IoU > 0.5 is a true positive)
 float compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
                                  const std::string& ground_truths_path) {
@@ -139,4 +139,56 @@ float compute_detection_accuracy(const std::string& dataset_path, const std::str
 	}
 
     return total_objects > 0 ? static_cast<float>(true_positives) / static_cast<float>(total_objects) : 0.0f;
+}*/
+// Computes detection accuracy for each object category based on IoU thresholding (IoU > 0.5 is a true positive)
+std::map<std::string, float> compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
+                                                         const std::string& ground_truths_path) {
+    std::map<std::string, int> total_objects_by_class;
+    std::map<std::string, int> true_positives_by_class;
+
+    // Iterate over each object category (sugar box, mustard bottle, etc.)
+    for (const fs::directory_entry& object_class : fs::directory_iterator(dataset_path)) {
+        if (object_class.is_directory()) {
+            std::string object_class_name = object_class.path().filename().string();  // Get the category name
+            fs::path ground_truth_path = object_class.path() / ground_truths_path;
+            fs::path prediction_path = fs::path(output_path) / object_class.path().filename();
+
+            std::map<std::string, std::map<std::string, std::vector<int>>> ground_truth_boxes = read_boxes_coordinates(ground_truth_path.string());
+            std::map<std::string, std::map<std::string, std::vector<int>>> predicted_boxes = read_boxes_coordinates(prediction_path.string());
+
+            for (const auto& pair : ground_truth_boxes) {
+                const std::string& file_id = pair.first;
+                const std::map<std::string, std::vector<int>>& object_boxes = pair.second;
+
+                for (const auto& object_box : object_boxes) {
+                    const std::string& object_id = object_box.first;
+                    float iou = compute_iou_if_present(object_id, object_box.second, predicted_boxes[file_id]);
+
+                    ++total_objects_by_class[object_class_name];  // Increment total objects for this category
+
+                    if (iou >= 0.5f) {
+                        ++true_positives_by_class[object_class_name];  // Increment true positives for this category
+                    } else {
+                        std::cout << "Object " << object_id << " in file " << file_id << " isn't a true positive" << std::endl;
+                    }
+                }
+            }
+        }
+    }
+
+    // Calculate detection accuracy for each category
+    std::map<std::string, float> accuracy_by_class;
+    for (const auto& class_entry : total_objects_by_class) {
+        const std::string& class_name = class_entry.first;
+        int total_objects = class_entry.second;
+        int true_positives = true_positives_by_class[class_name];
+
+        if (total_objects > 0) {
+            accuracy_by_class[class_name] = static_cast<float>(true_positives) / static_cast<float>(total_objects);
+        } else {
+            accuracy_by_class[class_name] = 0.0f;
+        }
+    }
+
+    return accuracy_by_class;
 }

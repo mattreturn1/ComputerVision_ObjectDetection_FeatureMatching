@@ -18,16 +18,16 @@ vector<pair<Rect, string>> detectObjects(
     Ptr<Feature2D> &detector
 ) {
     // Configuration constants: Define thresholds, parameters, and limits for various processing steps
-    constexpr float MATCH_RATIO_THRESHOLD = 0.85f;  // For matching descriptors
+    constexpr float MATCH_RATIO_THRESHOLD = 0.9f;  // For matching descriptors
     constexpr int MIN_INLIERS = 4;  // Minimum inliers for homography validation
     constexpr double RANSAC_THRESHOLD = 5.0;  // Threshold for RANSAC homography estimation
     constexpr float HOMOGRAPHY_DET_THRESHOLD = 0.1;  // Lower limit for homography determinant
     constexpr float HOMOGRAPHY_DET_UPPER_THRESHOLD = 10.0;  // Upper limit for homography determinant
     constexpr float CLUSTER_DISTANCE_THRESHOLD = 20.0f;  // Distance threshold for clustering
-    constexpr int MIN_POINTS_PER_CLUSTER = 20;  // Minimum number of points to consider a valid cluster
+    constexpr int MIN_POINTS_PER_CLUSTER = 18;  // Minimum number of points to consider a valid cluster
     constexpr float BOX_MERGE_DISTANCE = 250.0f;  // Maximum distance between bounding boxes for merging
-    const int MAX_BOX_AREA = 1600;  // Maximum allowed area for valid bounding boxes
-    const float DYNAMIC_MARGIN = 1.5f;  // Factor for dynamic margin based on points' standard deviation
+    const int MIN_BOX_AREA = 2000;  // Minimum allowed area for valid bounding boxes
+    const float DYNAMIC_MARGIN = 1.6f;  // Factor for dynamic margin based on points' standard deviation
 
     // Preprocess the scene for object detection
     Mat preprocessedScene = preprocessImage(scene);
@@ -238,10 +238,10 @@ vector<pair<Rect, string>> detectObjects(
                 // Final filtering of boxes based on area
                 for (const auto& box : mergedBoxes) {
                     int boxArea = box.width * box.height;
-                    if (boxArea < MAX_BOX_AREA) {
+                    if (boxArea < MIN_BOX_AREA) {
                         cout << "Rejected box for " << model.name
-                             << " - Area too large: " << boxArea
-                             << " (max allowed: " << MAX_BOX_AREA << ")\n";
+                             << " - Area too small: " << boxArea
+                             << " (min allowed: " << MIN_BOX_AREA << ")\n";
                         continue;
                     }
                     detections.emplace_back(box, model.name);
@@ -263,7 +263,7 @@ vector<pair<Rect, string>> detectObjects(
                 // Draw the final bounding boxes with area check
                 for (const auto& box : mergedBoxes) {
                     int boxArea = box.width * box.height;
-                    Scalar color = (boxArea < MAX_BOX_AREA) ? Scalar(0, 165, 255) : Scalar(0, 255, 0);
+                    Scalar color = (boxArea < MIN_BOX_AREA) ? Scalar(0, 165, 255) : Scalar(0, 255, 0);
                     rectangle(outputScene, box, color, 3);
                 }
 

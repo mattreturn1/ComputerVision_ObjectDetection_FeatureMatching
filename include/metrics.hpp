@@ -19,7 +19,6 @@ float compute_iou_if_present(const std::string& object_id, const std::vector<int
 
 float calculate_intersection_and_union_areas(const std::vector<int>& first_box, const std::vector<int>& second_box);
 
-float compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
-                                 const std::string& ground_truths_path = "labels");
-
+std::map<std::string, float> compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
+                                                         const std::string& ground_truths_path = "labels");
 #endif
