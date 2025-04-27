@@ -105,6 +105,7 @@ float calculate_intersection_and_union_areas(const std::vector<int>& first_box, 
     return static_cast<float>(intersection_area) / static_cast<float>(union_area);
 }
 
+// Computes per-class detection accuracy by comparing ground truth and predicted bounding boxes using IoU ≥ 0.5
 std::map<std::string, float> compute_detection_accuracy(const std::string& dataset_path, const std::string& output_path,
                                                      const std::string& ground_truths_path) {
     std::map<std::string, int> total_objects_by_class;
