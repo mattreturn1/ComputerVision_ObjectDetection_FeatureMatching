@@ -26,7 +26,7 @@ vector<pair<Rect, string>> detectObjects(
     constexpr float CLUSTER_DISTANCE_THRESHOLD = 20.0f;  // Distance threshold for clustering
     constexpr int MIN_POINTS_PER_CLUSTER = 18;  // Minimum number of points to consider a valid cluster
     constexpr float BOX_MERGE_DISTANCE = 250.0f;  // Maximum distance between bounding boxes for merging
-    const int MIN_BOX_AREA = 2000;  // Minimum allowed area for valid bounding boxes
+    const int MIN_BOX_AREA = 2500;  // Minimum allowed area for valid bounding boxes
     const float DYNAMIC_MARGIN = 0.9f;  // Factor for dynamic margin based on points' standard deviation
 
     // Preprocess the scene for object detection
